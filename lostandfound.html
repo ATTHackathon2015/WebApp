@@ -18,10 +18,14 @@ var lat;
 var long;
 var acc;
 var map;
-var markers = [];
-var marker_index;
+var lost_markers = [];
+var found_markers = [];
+var lost_marker_index;
+var found_marker_index;
 var marker_type;
 var pinImage;
+// var marker;
+// var infowindow;
 
 navigator.geolocation.getCurrentPosition(GetLocation);
 function GetLocation(location) {
@@ -30,7 +34,8 @@ function GetLocation(location) {
     acc = location.coords.accuracy;
 }
 function initialize() {
-    marker_index = 0;
+    lost_marker_index = 0;
+    found_marker_index = 0;
     marker_type = 0;
     var mapProp = {
         center:new google.maps.LatLng(lat,long),
@@ -42,6 +47,7 @@ function initialize() {
         placeMarker(event.latLng);
     });
 
+
 }
 function placeMarker(location) {
     if (marker_type != 0) {
@@ -51,13 +57,32 @@ function placeMarker(location) {
           map: map,
         });
         var infowindow = new google.maps.InfoWindow({
-          content: document.getElementById("item_name").value + '<br>' + location.lat() +
-          '<br>Longitude: ' + location.lng()
+          content: "Item name: " + document.getElementById("item_name").value + '<br>' + "Description: " + document.getElementById("description").value + '<br>' +
+           "Time: " + document.getElementById("time_found").value + '<br>' + "Contact: " + document.getElementById("phone").value,
+           map:map
         });
         infowindow.open(map,marker);
-        markers[marker_index] = marker;
-        marker_index = marker_index + 1;
+
+        if (marker_type == 1) {
+            lost_markers[lost_marker_index] = marker;
+            lost_marker_index = marker_index + 1;
+
+        } else if (marker_type == 2) {
+            found_markers[found_marker_index] = marker;
+            found_marker_index = marker_index + 1;
+
+        }
+
     }
+    google.maps.event.addListener(marker, 'mouseover', function() {
+        infowindow.open(map, this);
+    });
+
+    // assuming you also want to hide the infowindow when user mouses-out
+    google.maps.event.addListener(marker, 'mouseout', function() {
+        infowindow.close();
+    });
+
 
 }
 
@@ -98,7 +123,7 @@ $(document).ready(function() {
 
 </script>
 </head>
-<body style="background-color: rgb(102, 204, 255)">
+<body>
     <h1 id="title">Lost and Found</h1>
     <div class="row">
         <div class="col s12 m6" style="width:10%">
@@ -123,6 +148,12 @@ $(document).ready(function() {
                         <textarea id="description" class="materialize-textarea"></textarea>
                         <label for="description">Description</label>
                     </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input placeholder="Placeholder" id="time_found" type="text" class="validate">
+                    <label for="item_name">Date and Time Lost/Found</label>
                 </div>
             </div>
             <div class="row">
@@ -158,7 +189,7 @@ $(document).ready(function() {
         <option value="found">Found item</option>
     <select> -->
 
-<div id="googleMap" style="margin-top:-450px;width:75%;height:700px;"></div>
+<div id="googleMap" style="margin-top:-650px;width:70%;height:700px;"></div>
 
 </body>
 
