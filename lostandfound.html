@@ -41,7 +41,7 @@
       
       var markers = [];
       
-      function placeMarker(location, marker_type, pinImage, title, description, contact) {
+      function placeMarker(location, marker_type, pinImage, title, description, contact, id) {
           if (marker_type != 0) {
               var marker = new google.maps.Marker({
                 position: location,
@@ -49,9 +49,10 @@
                 map: map,
               });
               var infowindow = new google.maps.InfoWindow({
-                content: "Item name: " + title + '<br>' + "Description: " + description + '<br>' + '<br>' + "Contact: " + contact,
+                content: "Item name: " + title + '<br>' + "Description: " + description + '<br>' + "Contact: " + contact + '<br>' + '<button id="' + id + '">Resolve</button>',
                  map:map
               });
+              infowindow.clicked = false;
               // infowindow.open(map,marker);
               infowindow.close();
       
@@ -62,16 +63,35 @@
               } else if (marker_type == 2) {
                   found_markers[found_marker_index] = marker;
                   found_marker_index++;
-      
               }
+              
+              
+              google.maps.event.addListener(marker, 'click', function() {
+                  if (infowindow.clicked) {
+                    infowindow.close();
+                  } else {
+                      infowindow.open(map, this);
+                      if (!infowindow.clickListened) {
+                          $('#' + id).click(function () {
+                              resolve(id);
+                          });
+                          infowindow.clickListened = true;
+                      }
+                  }
+                  infowindow.clicked = !infowindow.clicked;
+              });
       
               google.maps.event.addListener(marker, 'mouseover', function() {
-                  infowindow.open(map, this);
+                  if (!infowindow.clicked) {
+                      infowindow.open(map, this);
+                  }
               });
           
               // assuming you also want to hide the infowindow when user mouses-out
               google.maps.event.addListener(marker, 'mouseout', function() {
-                  infowindow.close();
+                  if (!infowindow.clicked) {
+                      infowindow.close();
+                  }
               });
           }
       
@@ -107,9 +127,32 @@
             found_marker_index = 0;
             for (var i = 0; i < data.data.length; i++) {
               var item = data.data[i];
-              placeMarker(new google.maps.LatLng(item.location.lat, item.location.long), item.lost ? 1 : 2, item.lost ? new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/red-dot.png') : new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/green-dot.png'), item.title, item.description, item.contact);
+              placeMarker(new google.maps.LatLng(item.location.lat, item.location.long), item.lost ? 1 : 2, item.lost ? new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/red-dot.png') : new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/green-dot.png'), item.title, item.description, item.contact, item._id);
             }
           });
+      }
+      
+      function resolve(id) {
+          $.ajax({
+              url: 'http://sca3.canain.com:7000/resolve',
+              type: "POST",
+              data: JSON.stringify({
+                  phone: $('#phone').val(),
+                  data: {
+                      id: id,
+                      resolved: true
+                  }
+              }),
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              success: function(data){
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+                poll();
+                }
+            });
       }
       
       $(document).ready(function() {
