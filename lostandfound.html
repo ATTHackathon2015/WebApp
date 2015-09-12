@@ -31,8 +31,8 @@
       var found_markers = [];
       var lost_marker_index;
       var found_marker_index;
-      var marker_type;
-      var pinImage;
+      var sendMarker_type;
+      var sendPinImage;
       var marker;
       var infowindow;
       
@@ -43,18 +43,23 @@
       //     acc = location.coords.accuracy;
       // }
       
-      function placeMarker(location) {
+      function placeMarker(location, marker_type, pinImage, title, description, contact) {
           if (marker_type != 0) {
               var marker = new google.maps.Marker({
                 position: location,
                 icon: pinImage,
                 map: map,
               });
+              // var infowindow = new google.maps.InfoWindow({
+              //   content: "Item name: " + document.getElementById("item_name").value + '<br>' + "Description: " + document.getElementById("description").value + '<br>' + '<br>' + "Contact: " + document.getElementById("phone").value,
+              //    map:map
+              // });
               var infowindow = new google.maps.InfoWindow({
-                content: "Item name: " + document.getElementById("item_name").value + '<br>' + "Description: " + document.getElementById("description").value + '<br>' + '<br>' + "Contact: " + document.getElementById("phone").value,
+                content: "Item name: " + title + '<br>' + "Description: " + description + '<br>' + '<br>' + "Contact: " + contact,
                  map:map
               });
-              infowindow.open(map,marker);
+              // infowindow.open(map,marker);
+              infowindow.close();
       
               if (marker_type == 1) {
                   lost_markers[lost_marker_index] = marker;
@@ -82,12 +87,12 @@
       function setMarkerType(val) {
           // document.getElementById("title").innerHTML = "Lost";
           if (val == "lost") {
-              marker_type = 1;
-              pinImage = new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
+              sendMarker_type = 1;
+              sendPinImage = new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
               document.getElementById("title").innerHTML = "Lost";
           } else if (val == "found") {
-              marker_type = 2;
-              pinImage = new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+              sendMarker_type = 2;
+              sendPinImage = new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
               document.getElementById("title").innerHTML = "Found";
           } else {
               marker_type = 0;
@@ -107,11 +112,23 @@
           };
           map=new google.maps.Map(document.getElementById("googleMap"), mapProp);
           map.addListener('click', function(event) {
-              placeMarker(event.latLng);
+            // console.log(event.latLng);
+              // placeMarker(event.latLng, );
           });
           
           $('select').change(function () {
             setMarkerType($('select').val());
+          });
+          
+          $.getJSON('http://sca3.canain.com:7000', function (data) {
+            if (data.error) {
+              console.log(data.error);
+              return;
+            }
+            for (var i = 0; i < data.data.length; i++) {
+              var item = data.data[i];
+              placeMarker(new google.maps.LatLng(item.location.lat, item.location.long), item.lost ? 1 : 2, item.lost ? new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/red-dot.png') : new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/green-dot.png'), item.title, item.description, item.contact);
+            }
           });
       });
     </script>
