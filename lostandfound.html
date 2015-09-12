@@ -25,7 +25,7 @@
     <script>
       var lat = 33.777909;
       var long = -84.389315;
-      var acc;
+      // var acc;
       var map;
       var lost_markers = [];
       var found_markers = [];
@@ -33,8 +33,8 @@
       var found_marker_index;
       var marker_type;
       var pinImage;
-      // var marker;
-      // var infowindow;
+      var marker;
+      var infowindow;
       
       // navigator.geolocation.getCurrentPosition(GetLocation);
       // function GetLocation(location) {
@@ -42,7 +42,61 @@
       //     long = location.coords.longitude;
       //     acc = location.coords.accuracy;
       // }
-      function initialize() {
+      
+      function placeMarker(location) {
+          if (marker_type != 0) {
+              var marker = new google.maps.Marker({
+                position: location,
+                icon: pinImage,
+                map: map,
+              });
+              var infowindow = new google.maps.InfoWindow({
+                content: "Item name: " + document.getElementById("item_name").value + '<br>' + "Description: " + document.getElementById("description").value + '<br>' + '<br>' + "Contact: " + document.getElementById("phone").value,
+                 map:map
+              });
+              infowindow.open(map,marker);
+      
+              if (marker_type == 1) {
+                  lost_markers[lost_marker_index] = marker;
+                  lost_marker_index++;
+      
+              } else if (marker_type == 2) {
+                  found_markers[found_marker_index] = marker;
+                  found_marker_index++;
+      
+              }
+      
+              google.maps.event.addListener(marker, 'mouseover', function() {
+                  infowindow.open(map, this);
+              });
+          
+              // assuming you also want to hide the infowindow when user mouses-out
+              google.maps.event.addListener(marker, 'mouseout', function() {
+                  infowindow.close();
+              });
+          }
+      
+      
+      }
+      
+      function setMarkerType(val) {
+          // document.getElementById("title").innerHTML = "Lost";
+          if (val == "lost") {
+              marker_type = 1;
+              pinImage = new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
+              document.getElementById("title").innerHTML = "Lost";
+          } else if (val == "found") {
+              marker_type = 2;
+              pinImage = new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+              document.getElementById("title").innerHTML = "Found";
+          } else {
+              marker_type = 0;
+          }
+      }
+      
+      $(document).ready(function() {
+          $('select').material_select();
+          
           lost_marker_index = 0;
           found_marker_index = 0;
           marker_type = 0;
@@ -55,66 +109,10 @@
           map.addListener('click', function(event) {
               placeMarker(event.latLng);
           });
-      
-      
-      }
-      function placeMarker(location) {
-          if (marker_type != 0) {
-              var marker = new google.maps.Marker({
-                position: location,
-                icon: pinImage,
-                map: map,
-              });
-              var infowindow = new google.maps.InfoWindow({
-                content: "Item name: " + document.getElementById("item_name").value + '<br>' + "Description: " + document.getElementById("description").value + '<br>' +
-                 "Time: " + document.getElementById("time_found").value + '<br>' + "Contact: " + document.getElementById("phone").value,
-                 map:map
-              });
-              infowindow.open(map,marker);
-      
-              if (marker_type == 1) {
-                  lost_markers[lost_marker_index] = marker;
-                  lost_marker_index = marker_index + 1;
-      
-              } else if (marker_type == 2) {
-                  found_markers[found_marker_index] = marker;
-                  found_marker_index = marker_index + 1;
-      
-              }
-      
-          }
-          google.maps.event.addListener(marker, 'mouseover', function() {
-              infowindow.open(map, this);
+          
+          $('select').change(function () {
+            setMarkerType($('select').val());
           });
-      
-          // assuming you also want to hide the infowindow when user mouses-out
-          google.maps.event.addListener(marker, 'mouseout', function() {
-              infowindow.close();
-          });
-      
-      
-      }
-      
-      function setMarkerType(val) {
-          // document.getElementById("title").innerHTML = "Lost";
-          if (val == "Lost") {
-              marker_type = 1;
-              pinImage = new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
-              document.getElementById("title").innerHTML = "Lost";
-          } else if (val == "Found") {
-              marker_type = 2;
-              pinImage = new google.maps.MarkerImage('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
-              document.getElementById("title").innerHTML = "Found";
-          } else {
-              marker_type = 0;
-          }
-      }
-      
-      
-      google.maps.event.addDomListener(window, 'load', initialize);
-      
-      $(document).ready(function() {
-          $('select').material_select();
       });
     </script>
   </head>
@@ -156,7 +154,7 @@
           <div class="row">
             <div class="input-field col s12">
               <select>
-                <option value="" disabled selected onchange="setMarkerType(this.value)">Choose your option</option>
+                <option value="" disabled selected>Choose your option</option>
                 <option value="lost">Lost</option>
                 <option value="found">Found</option>
               </select>
